@@ -5,7 +5,7 @@
 
 import PySimpleGUI as sg
 import concurrent.futures
-import Reklama5_Scraper as rs  # Assuming you imported your functions and dicts as rs
+import Reklama5_Scraper_v1 as rs  # Assuming you imported your functions and dicts as rs
 import threading
 import pandas as pd
 import time
@@ -47,6 +47,7 @@ def main_gui():
     def fetch_ads_and_update_progress():
         window["Провери реклами"].update(disabled=True)
         window["Прикажи реклами"].update(disabled=True)
+        window["Експортирај во Excel"].update(disabled=True)
         nonlocal ads
 
         if not selected_category:
@@ -70,12 +71,18 @@ def main_gui():
         if secondary_url:
             ad_links = rs.page_read(secondary_url, max_pages)
 
-            # Update the progress bar for pages fetched
-            window["-PAGE_PROGRESS-"].update(0, max=len(ad_links))
+            # Set progress bar max value based on total pages
+            window["-PAGE_PROGRESS-"].update(0, max=max_pages)
+
             for i, link in enumerate(ad_links):
-                if i % 2 == 0:  # Only update progress every 5th page for efficiency
+                # Fetch ad details for the current page
+                ads_on_page = rs.fetch_ad_details(link)  
+                
+                if ads_on_page:  # Only update progress if ads were actually fetched
                     window.write_event_value("-PROGRESS_PAGE-", i + 1)
-                    time.sleep(0.1)
+                
+                time.sleep(0.1)  # Simulate delay (remove this in actual implementation)
+
 
             # Use ThreadPoolExecutor for fetching ad details concurrently
             ads = []
@@ -86,6 +93,7 @@ def main_gui():
 
             window["Провери реклами"].update(disabled=False)
             window["Прикажи реклами"].update(disabled=False)
+            window["Експортирај во Excel"].update(disabled=False)
 
             if not ads:  # Only print if no ads have been fetched yet
                 print(f"\nПрибрани {len(ads)} реклами!")
@@ -139,7 +147,8 @@ def main_gui():
                     print("---")  # Separate the ads with a line
 
                 # Update the progress bar for each ad processed
-                window.write_event_value("-PROGRESS_AD-", i + 1)  # Update progress for each ad processed
+                if i % 2 == 0:  # Updates every 2 ads
+                    window.write_event_value("-PROGRESS_AD-", i + 1)
 
             print(f"\nПронајдени {len(matched_ads)} реклами!")  # Print number of matched ads
 
@@ -210,11 +219,12 @@ def main_gui():
             if isinstance(primary_value, dict):  # If subcategories exist
                 subcategories = list(primary_value.keys())
                 window["-SUBCATEGORY-"].update(values=subcategories)
+                print(f"Одберена категорија: {selected_category}\n")
             else:  # If no subcategories, use the base value directly
                 selected_subcategory = primary_value
                 window["-SUBCATEGORY-"].update(values=[])  # Clear subcategory selection
                 print(f"Одберена категорија: {selected_category} (Нема подкатегории) \n")
-
+        
         # Провери реклами
         if event == "Провери реклами":
             threading.Thread(target=fetch_ads_and_update_progress, daemon=True).start()
