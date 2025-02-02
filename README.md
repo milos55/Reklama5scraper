@@ -55,14 +55,17 @@ pip install PySimpleGUI pandas requests beautifulsoup4 openpyxl
 Simply run the Python script:
 
 ```sh
-python reklama5_scraper.py
+python reklama5_Gui_v1.py
 ```
+
+The code doesn't work without the GUI unless edited
 
 ## Future Improvements
 - Add support for additional filtering options (price range, date posted, etc.).
 - Optimize UI performance for large datasets.
 - Implement automatic updates for new categories.
-
----
-This README provides an overview of the Reklama5 Scraper, its functionality, and how to use it effectively. 🚀
+- Add support for scraping other sites
+- Improve UI
+- Make web GUI
+- Make fetching and processing ads faster
 
