@@ -68,4 +68,6 @@ The code doesn't work without the GUI unless edited
 - Improve UI
 - Make web GUI
 - Make fetching and processing ads faster
-
+- Scrape images with ads to pair them
+- Scrape ad creation date
+- Remove duplicate ads
