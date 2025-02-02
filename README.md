@@ -71,3 +71,4 @@ The code doesn't work without the GUI unless edited
 - Scrape images with ads to pair them
 - Scrape ad creation date
 - Remove duplicate ads
+- ##Add asynchronous HTTP request (Aiohttp, Asyncio?)
