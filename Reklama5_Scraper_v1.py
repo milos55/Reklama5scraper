@@ -286,6 +286,15 @@ katdictx = {
 
 }
 
+def is_gui_active():
+    try:
+        import PySimpleGUI as sg
+        if "window" in globals() and isinstance(globals()["window"], sg.Window):
+            return True
+    except ImportError:
+        pass
+    return False
+
 def select_category():
     print("Избери категорија:")
     for i, (category, cat_id) in enumerate(katdict.items(), 1):
@@ -353,12 +362,19 @@ def fetch_ad_details(adrequest):
     title = adsoup.find('h5', class_='card-title')
     price = adsoup.find('h5', class_='mb-0 defaultBlue')
     addesc = adsoup.find('p', class_='mt-3')
+    addate_element = adsoup.find_all('div', class_='col-4 align-self-center')
+    # dava error u gui bez ovoj u threading
+    if len(addate_element) > 2:
+        addate = addate_element[2].find('span').text
+    else:
+        addate = "N/A"
 
 
     ad_info = {
         'adlink': adrequest,
         'adtitle': title.text.strip() if title else 'N/A',
         'adprice': price.text.replace('\r\n', '').strip() if price else 'N/A',
+        'addate' : addate if addate else 'N/A', #vrakja i denes mozda bolje da konvertira denes u date today idk?
         'addesc' : addesc.text.strip() if addesc else 'N/A',
 
     }
@@ -375,87 +391,57 @@ def keyword_search():
     
     return keywords
 
-def search_ads_title(ads, keywords):
-    results = []
-    for ad in ads:
-        match_found = False
-        # Title search logic
-        for keyword in keywords:
-            if re.search(r'\b' + re.escape(keyword) + r'\b', ad['adtitle'].lower()):  # Whole word match
-                match_found = True
-                break  # Stop if a match is found
-
-        if match_found:
-            print(f'Title: {ad["adtitle"]}')
-
-            print(f'Price: {ad["adprice"]}')
-            print(f'Link: {ad["adlink"]}')
-            print('---')
-            results.append(ad)
+def search_ads_and_update_progress(ads, keywords, values=None):
     
-    return results if results else []
-
-def search_ads_desc(ads, keywords):
     results = []
-    for ad in ads:
-        match_found = False
-        # Description search logic
-        for keyword in keywords:
-            if re.search(r'\b' + re.escape(keyword) + r'\b', ad['addesc'].lower()):  # Whole word match
-                match_found = True
-                break  # Stop if a match is found
 
-        if match_found:
-            print(f'Title: {ad["adtitle"]}')
-            print(f'Price: {ad["adprice"]}')
-            print(f'Link: {ad["adlink"]}')
+    if not ads:
+        print("Нема реклами за пребарување." if not is_gui_active() else "No ads to search.")
+        return results
 
-            print('---')
-            results.append(ad)
     
-    return results if results else []
+    if is_gui_active():
+        search_title = values.get("-TITLE-", False)
+        search_desc = values.get("-DESC-", False)
+        search_all = values.get("-ALL-", False)
+    else:
+        search_type = input('Барање по наслов на реклама (1), опис на реклама (2) или и двете (3)? ')
+        search_title = search_type == '1'
+        search_desc = search_type == '2'
+        search_all = search_type == '3'
 
-def search_ads_and_update_progress():
-    if ads:
-        keywords = [keyword.strip().lower() for keyword in values["-KEYWORDS-"].split(",")]  # Lowercase and strip extra spaces
-
-        # Update progress bar for ad searching
+    if is_gui_active() and "window" in globals():
         window["-AD_PROGRESS-"].update(0, max=len(ads))
-        for i, ad in enumerate(ads):
-            match_found = False
 
-            # Title search logic
-            if values["-TITLE-"]:
-                for keyword in keywords:
-                    if re.search(r'\b' + re.escape(keyword) + r'\b', ad.get("adtitle", "").lower()):  # Whole word match
-                        match_found = True
-                        break  # Stop if a match is found
+    for i, ad in enumerate(ads):
+        match_found = False
 
-            # Description search logic
-            if values["-DESC-"]:
-                for keyword in keywords:
-                    if re.search(r'\b' + re.escape(keyword) + r'\b', ad.get("addesc", "").lower()):  # Whole word match
-                        match_found = True
-                        break  # Stop if a match is found
+        if search_title or search_all:
+            for keyword in keywords:
+                if re.search(r'\b' + re.escape(keyword) + r'\b', ad.get("adtitle", "").lower()):
+                    match_found = True
+                    break
 
-            # Search in both title and description
-            if values["-ALL-"]:
-                for keyword in keywords:
-                    if (re.search(r'\b' + re.escape(keyword) + r'\b', ad.get("adtitle", "").lower()) or
-                            re.search(r'\b' + re.escape(keyword) + r'\b', ad.get("addesc", "").lower())):  # Whole word match
-                        match_found = True
-                        break  # Stop if a match is found
+        if (not match_found) and (search_desc or search_all):
+            for keyword in keywords:
+                if re.search(r'\b' + re.escape(keyword) + r'\b', ad.get("addesc", "").lower()):
+                    match_found = True
+                    break
 
-            # Only update the progress bar for valid matches
-            if match_found:
-                window["-AD_PROGRESS-"].update(i + 1)
+        if match_found:
+            results.append(ad)
 
-                # Print matching ad
+            if not is_gui_active():
                 print(f"Наслов: {ad['adtitle']}")
+                print(f"Датум: {ad['addate']}")
                 print(f"Цена: {ad['adprice']}")
-
                 print(f"Линк: {ad['adlink']}")
-                print("---")
+                print('---')
+
+        if is_gui_active() and "window" in globals():
+            window["-AD_PROGRESS-"].update(i + 1)
+
+    return results
 
 latin_to_macedonian = {
     'a': 'а', 'b': 'б', 'v': 'в', 'g': 'г', 'd': 'д', 'e': 'е', 'zh': 'ж', 'z': 'з', 
@@ -474,18 +460,32 @@ def transliterate_to_macedonian(text):
 
 
 def print_results(results):
+    """
+    Prints the results of the search to the console.
+
+    :param results: A list of dictionaries, each dictionary representing an ad
+    """
     for ad in results:
         print(f"Title: {ad['adtitle']}")
+        print(f"Date: {ad['addate']}")
         print(f"Price: {ad['adprice']}")
         print(f"Link: {ad['adlink']}")
         print('---')
 
 
 def main():
+    """
+    Main function to run the Reklama5 scraper in command line mode.
+
+    This function will select a category, select a secondary category, fetch ad links,
+    fetch ad details, search for keywords in the fetched ads, and print the results.
+    """
     global max_page
-    ads = []  # Initialize ads list
+    ads = []  # List to store scraped ads
+
+    # Category selection
     primary_category, primary_value = select_category()
-    secondary_category, secondary_url = select_sec_category(primary_category, primary_value)  # Unpack if it's a tuple
+    secondary_category, secondary_url = select_sec_category(primary_category, primary_value)
     
     try:
         max_page = int(input("Внеси број на страници: "))
@@ -493,7 +493,7 @@ def main():
         print("Грешка при внесување на бројот на страници.")
         max_page = 1
 
-    # Proceed only if a valid secondary URL is returned
+    # Fetch ads if secondary URL is valid
     if secondary_url:
         adlink = page_read(secondary_url, max_page)
 
@@ -511,23 +511,21 @@ def main():
 
         executor.shutdown(wait=True)
 
-    keywords = keyword_search()
-
-    search_type = input('Барање по наслов на реклама (1), опис на реклама (2) или и двете (3)? ')
-    if search_type.lower() == '1':
-        results = search_ads_title(ads, keywords)
-    elif search_type.lower() == '2':
-        results = search_ads_desc(ads, keywords)
-    elif search_type.lower() == '3':
-        results = search_ads_title(ads, keywords) + search_ads_desc(ads, keywords)
-
-    # Print results if any matches were found
-    if results:
-        print_results(results)
+    # Get keywords
+    if is_gui_active():
+        keywords = [keyword.strip().lower() for keyword in values["-KEYWORDS-"].split(",")]
     else:
+        keywords = keyword_search()
+
+    # Search ads
+    results = search_ads_and_update_progress(ads, keywords, values=None)
+
+    # Print results (if not using GUI)
+    if not is_gui_active() and results:
+        print_results(results)
+    elif not results:
         print("Нема реклами кои одговараат на вашите критериуми.")
 
 
 if __name__ == "__main__":
     main()
-
