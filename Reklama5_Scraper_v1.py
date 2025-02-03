@@ -354,11 +354,13 @@ def fetch_ad_details(adrequest):
     price = adsoup.find('h5', class_='mb-0 defaultBlue')
     addesc = adsoup.find('p', class_='mt-3')
 
+
     ad_info = {
         'adlink': adrequest,
         'adtitle': title.text.strip() if title else 'N/A',
         'adprice': price.text.replace('\r\n', '').strip() if price else 'N/A',
-        'addesc' : addesc.text.strip() if addesc else 'N/A'
+        'addesc' : addesc.text.strip() if addesc else 'N/A',
+
     }
     return ad_info
 
@@ -385,6 +387,7 @@ def search_ads_title(ads, keywords):
 
         if match_found:
             print(f'Title: {ad["adtitle"]}')
+
             print(f'Price: {ad["adprice"]}')
             print(f'Link: {ad["adlink"]}')
             print('---')
@@ -406,6 +409,7 @@ def search_ads_desc(ads, keywords):
             print(f'Title: {ad["adtitle"]}')
             print(f'Price: {ad["adprice"]}')
             print(f'Link: {ad["adlink"]}')
+
             print('---')
             results.append(ad)
     
@@ -449,6 +453,7 @@ def search_ads_and_update_progress():
                 # Print matching ad
                 print(f"Наслов: {ad['adtitle']}")
                 print(f"Цена: {ad['adprice']}")
+
                 print(f"Линк: {ad['adlink']}")
                 print("---")
 
@@ -468,14 +473,29 @@ def transliterate_to_macedonian(text):
     return text
 
 
+def print_results(results):
+    for ad in results:
+        print(f"Title: {ad['adtitle']}")
+        print(f"Price: {ad['adprice']}")
+        print(f"Link: {ad['adlink']}")
+        print('---')
+
+
 def main():
+    global max_page
     ads = []  # Initialize ads list
     primary_category, primary_value = select_category()
     secondary_category, secondary_url = select_sec_category(primary_category, primary_value)  # Unpack if it's a tuple
     
+    try:
+        max_page = int(input("Внеси број на страници: "))
+    except ValueError:
+        print("Грешка при внесување на бројот на страници.")
+        max_page = 1
+
     # Proceed only if a valid secondary URL is returned
     if secondary_url:
-        adlink = page_read(secondary_url)
+        adlink = page_read(secondary_url, max_page)
 
         # Submit tasks to the executor
         with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:

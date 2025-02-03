@@ -230,7 +230,7 @@ def main_gui():
             threading.Thread(target=fetch_ads_and_update_progress, daemon=True).start()
 
         # Keyword Search
-        if event == "Прикажи реклами"
+        if event == "Прикажи реклами":
             threading.Thread(target=search_ads_and_update_progress, daemon=True).start()
 
         # Export to Excel
