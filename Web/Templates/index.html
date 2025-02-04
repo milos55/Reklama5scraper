@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reklama5 Scraper</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+{% block content %}
+<body>
+    <div id="main-container" class="container">
+        <div id="categories-subcategories" class="flex-container">
+            <!-- Categories Block -->
+            <div id="categories-container" class="block">
+                <h2>Categories</h2>
+                <div class="grid-container">
+                    {% for category, id in categories %}
+                        <button class="btn-cat" onclick="selectCategory('{{ id }}')">{{ category }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+    
+            <!-- Subcategories Block -->
+            <div id="subcategories-container" class="block">
+                <h2>Subcategories</h2>
+                <div class="grid-container"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ads Block (Hidden Initially) -->
+    <div id="ads-container" class="block" style="display: none;">
+        <div class="ads-header">
+            <h2>Filtered Ads</h2>
+            <button id="back-button" class="btn-back" onclick="goBack()">Back</button>
+        </div>
+        <div class="ads-grid"></div>
+    </div>
+
+    
+    <script>
+        function selectCategory(categoryId) {
+            fetch(`/select_category/${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let subcategoriesContainer = document.getElementById('subcategories-container');
+                    let adsContainer = document.getElementById('ads-container');
+    
+                    subcategoriesContainer.style.display = "block";
+                    adsContainer.style.display = "none";
+    
+                    if (data.subcategories && data.subcategories.length > 0) {
+                        let subcategoriesHtml = "";
+                        data.subcategories.forEach(([subcategory, url], index) => {
+                            subcategoriesHtml += `<button class="btn-cat" onclick="selectSubcategory(${categoryId}, ${index + 1})">${subcategory}</button>`;
+                        });
+                        subcategoriesContainer.querySelector(".grid-container").innerHTML = subcategoriesHtml;
+                    } else {
+                        fetchAds(data.url);
+                    }
+                });
+        }
+    
+        function selectSubcategory(categoryId, subcategoryId) {
+            fetch(`/select_subcategory/${categoryId}/${subcategoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    fetchAds(data.url);
+                });
+        }
+    
+        function fetchAds(url) {
+            const maxPage = prompt("Enter the number of pages to scrape:", "1");
+
+            fetch('/fetch_ads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url, max_page: parseInt(maxPage) }),
+            })
+            .then(response => response.json())
+            .then(ads => {
+                let adsContainer = document.getElementById('ads-container');
+                let adsGrid = adsContainer.querySelector(".ads-grid");
+
+                // Hide categories/subcategories
+                document.getElementById('main-container').style.display = "none";
+                adsContainer.style.display = "block";
+
+                // Ask user for keywords
+                let keywordInput = prompt("Enter keywords (comma-separated) for filtering ads:", "");
+                let keywords = keywordInput ? keywordInput.split(',').map(k => k.trim()) : [];
+
+                fetch('/search_ads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ads: ads, keywords: keywords }),
+                })
+                .then(response => response.json())
+                .then(filteredAds => {
+                    let adsHtml = "";
+                    filteredAds.forEach(ad => {
+                        adsHtml += `
+                            <a href="${ad.adlink}" target="_blank" style="text-decoration: none;">
+                                <div class="ad-block">
+                                    <p>${ad.adtitle}</p>
+                                    <p>${ad.addate} | ${ad.adprice}</p>
+                                    <div class="ad-description">${ad.addesc}</div>
+                                </div>
+                            </a>`;
+                    });
+
+                    // Insert ads inside `.ads-grid` only
+                    adsGrid.innerHTML = adsHtml;
+                });
+            });
+        }
+
+    
+        function goBack() {
+            let mainContainer = document.getElementById('main-container');
+            let adsContainer = document.getElementById('ads-container');
+            let categoriesSubcategories = document.getElementById('categories-subcategories');
+
+            // Show categories & subcategories
+            mainContainer.style.display = "block";
+            categoriesSubcategories.style.display = "flex"; // Ensure it restores the flex layout
+
+            // Hide ads container
+            adsContainer.style.display = "none";
+        }
+
+    </script>
+</body>
+{% endblock content %}
+</html>
