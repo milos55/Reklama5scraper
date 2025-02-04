@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Реклама 5 Читач{% endblock %}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: black;
+            background-color: bisque;
+        }
+        header {
+            background-color: slategray;
+            color: white;
+            border-radius: 10px;
+        }
+        footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #555;
+        }
+        .btn {
+            background-color: azure;
+            color: black;
+            border-radius: 50px;
+            border: 5px solid black;
+            width: 80px;
+            height: 40px;
+            display: inline-flex;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .btn:hover {
+            opacity: 0.7;
+            box-shadow: 5px 5px 10px black;
+        }
+        .btn:active {
+            opacity: 0.3;
+        }
+        .btn-back {
+            background-color: azure;
+            color: black;
+            border-radius: 5px;
+            border: 3px solid black;
+            width: 80px;
+            height: 40px;
+            display: inline-flex;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .block {
+            flex: 1;
+            border: 2px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .btn-cat {
+            width: 100%;
+            padding: 10px;
+            height: 80px;
+            width: 100%;
+            font-size: 16px;
+            color: white;
+            background-color: #68a0db;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-cat:hover {
+            background-color: #0056b3;
+        }
+
+        #ads-container {
+            display: none;
+            padding: 20px;
+        }
+
+        .ads-grid {
+            display: flexbox;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .ads-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .ad-block {
+            border: 4px solid black;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: gainsboro;
+            text-align: justify;
+            transition: 0.3s ease-in-out;
+            text-decoration: none;
+        }
+
+        .ad-block:hover {
+            background-color: #e0e0e0;
+            opacity: 0.7;
+        }
+
+        .ad-block p {
+            text-decoration: none;
+            text-decoration-line: none;
+            font-size: 18px;
+            font-weight: bold;
+            color: black;
+        }
+
+        .ad-description {
+            text-decoration: none;
+            text-align: justify;
+            color: black;
+            
+        }
+        .flex-container {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        #main-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            flex-wrap: nowrap;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%; /* Ensure it stretches full width */
+        }
+
+        #categories-container, #subcategories-container {
+            flex: 1; /* Make both take equal space */
+            min-width: 0; /* Allow shrinking */
+        }
+
+        #categories-container {
+            max-width: 50%; /* Prevent too much stretching */
+        }
+
+        #subcategories-container {
+            max-width: 50%;
+        }
+
+
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 style="text-align: center;">Реклама 5 Читач</h1>
+        <nav style="margin: 5px; padding: 5px;">
+            <a href="/" class="btn">Home</a>
+            
+            <a href="/about" class="btn">About</a>
+        </nav>
+    </header>
+
+    <div>
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Милош Смиљковиќ</p>
+    </footer>
+
+</body>
+</html>
