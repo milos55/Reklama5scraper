@@ -142,6 +142,7 @@ def main_gui():
                     matched_ads.append(ad)  # Add the matched ad to the matched_ads list
 
                     print(f"Наслов: {ad['adtitle']}")
+                    print(f"Датум: {ad['addate']}")
                     print(f"Цена: {ad['adprice']}")
                     print(f"Линк: {ad['adlink']}")
                     print("---")  # Separate the ads with a line
@@ -185,7 +186,8 @@ def main_gui():
 
             if match_found:
                 matched_ads.append({
-                    "ADNAME": ad.get("adtitle"), 
+                    "ADNAME": ad.get("adtitle"),
+                    "DATE": ad.get("addate"), 
                     "PRICE": ad.get("adprice"), 
                     "LINK": ad.get("adlink")
                 })
@@ -230,7 +232,7 @@ def main_gui():
             threading.Thread(target=fetch_ads_and_update_progress, daemon=True).start()
 
         # Keyword Search
-        if event == "Прикажи реклами"
+        if event == "Прикажи реклами":
             threading.Thread(target=search_ads_and_update_progress, daemon=True).start()
 
         # Export to Excel
