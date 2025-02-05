@@ -1,0 +1,44 @@
+
+body.flex-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+
+body.about-page main {
+    display: block;
+    margin: 0 auto;
+    width: 80%;
+}
+
+.title {
+    text-align: justify;
+    margin-top: 20px;
+    color: black;
+}
+
+.text {
+    text-align: justify;
+    margin-top: 20px;
+    text-indent: 1rem;
+    color: black;
+}
+
+li.list-item {
+    text-align: left;
+    margin-top: 20px;
+    text-indent: 4rem;
+    color: black;
+}
+
+.about-container {
+    background-color: #E8ECD7;
+    color: black;
+    border-radius: 50px;
+    padding: 20px;
+    margin-top: 20px;
+    margin-left: 20px;
+    margin-right: 20px;
+    box-shadow: 20px 20px 15px 10px black;
+}

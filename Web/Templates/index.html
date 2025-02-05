@@ -7,13 +7,14 @@
     <title>Reklama5 Scraper</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
+
 {% block content %}
 <body>
-    <div id="main-container" class="container">
+    <div id="main-container" class="container" style="display: none;">
         <div id="categories-subcategories" class="flex-container">
             <!-- Categories Block -->
             <div id="categories-container" class="block">
-                <h2>Categories</h2>
+                <h2>Категории</h2>
                 <div class="grid-container">
                     {% for category, id in categories %}
                         <button class="btn-cat" onclick="selectCategory('{{ id }}')">{{ category }}</button>
@@ -23,7 +24,7 @@
     
             <!-- Subcategories Block -->
             <div id="subcategories-container" class="block">
-                <h2>Subcategories</h2>
+                <h2>Подкатегорија</h2>
                 <div class="grid-container"></div>
             </div>
         </div>
@@ -32,14 +33,49 @@
     <!-- Ads Block (Hidden Initially) -->
     <div id="ads-container" class="block" style="display: none;">
         <div class="ads-header">
-            <h2>Filtered Ads</h2>
+            <h2>Филтрирани огласи</h2>
             <button id="back-button" class="btn-back" onclick="goBack()">Back</button>
         </div>
         <div class="ads-grid"></div>
     </div>
 
-    
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const getStartedBtns = document.querySelectorAll(".action-btn"); // Select all buttons
+            const mainContainer = document.getElementById("main-container");
+
+            // Initially hide the main content
+            if (mainContainer) {
+                mainContainer.style.display = "none";
+            }
+
+            getStartedBtns.forEach((btn) => {
+                // Check if the button has been clicked before
+                if (localStorage.getItem("getStartedClicked") === "true") {
+                    btn.style.display = "none"; // Hide the button
+                    if (mainContainer) {
+                        mainContainer.style.display = "block"; // Show main content
+                    }
+                } else {
+                    // Add click event listener for each button
+                    btn.addEventListener("click", function (event) {
+                        // Hide all "Get Started" buttons
+                        getStartedBtns.forEach((b) => (b.style.display = "none"));
+
+                        // Set flag in localStorage to hide button on future visits
+                        localStorage.setItem("getStartedClicked", "true");
+
+                        // Show the main content
+                        if (mainContainer) {
+                            mainContainer.style.display = "block";
+                        }
+                        window.location.hash = "#";
+                    });
+                }
+            });
+        });
+
+
         function selectCategory(categoryId) {
             fetch(`/select_category/${categoryId}`)
                 .then(response => response.json())
@@ -71,7 +107,15 @@
         }
     
         function fetchAds(url) {
-            const maxPage = prompt("Enter the number of pages to scrape:", "1");
+            let maxPage;
+            while (true) {
+                let input = prompt("Внесете број на страни за пребарување", "1");
+                maxPage = parseInt(input);
+                if (!isNaN(maxPage) && maxPage > 0) {
+                    break;
+                }
+                alert("Невалиден број на страни.");
+            }
 
             fetch('/fetch_ads', {
                 method: 'POST',
@@ -88,7 +132,7 @@
                 adsContainer.style.display = "block";
 
                 // Ask user for keywords
-                let keywordInput = prompt("Enter keywords (comma-separated) for filtering ads:", "");
+                let keywordInput = prompt("Внесете зборови (одделени со запирка) за филтирирање на реклами:", "");
                 let keywords = keywordInput ? keywordInput.split(',').map(k => k.trim()) : [];
 
                 fetch('/search_ads', {
@@ -129,6 +173,9 @@
             // Hide ads container
             adsContainer.style.display = "none";
         }
+
+
+
 
     </script>
 </body>
