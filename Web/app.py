@@ -412,11 +412,39 @@ def search_ads():
     data = request.json
     ads = data.get('ads')
     keywords = data.get('keywords')
-    search_title = data.get('search_title', True)
-    search_desc = data.get('search_desc', True)
-    search_all = data.get('search_all', False)
+    search_title = data.get('search_title', False)
+    search_desc = data.get('search_desc', False)
+
+    search_all = search_title and search_desc
+    
     results = search_ads_and_update_progress(ads, keywords, search_title, search_desc, search_all)
     return jsonify(results)
+
+# Translation for input
+latin_to_macedonian = {
+    'a': 'а', 'b': 'б', 'v': 'в', 'g': 'г', 'd': 'д', 'e': 'е', 'zh': 'ж', 'z': 'з',
+    'i': 'и', 'j': 'ј', 'k': 'к', 'l': 'л', 'lj': 'љ', 'm': 'м', 'n': 'н', 'nj': 'њ',
+    'o': 'о', 'p': 'п', 'r': 'р', 's': 'с', 't': 'т', 'c': 'ц', 'ch': 'ч', 'dz': 'џ',
+    'sh': 'ш', 'u': 'у', 'f': 'ф', 'h': 'х', 'y': 'у'
+}
+
+def transliterate_to_macedonian(text):
+    """Convert a string from Latin to Macedonian Cyrillic."""
+    sorted_keys = sorted(latin_to_macedonian.keys(), key=len, reverse=True)
+    for key in sorted_keys:
+        text = text.replace(key, latin_to_macedonian[key])
+    return text
+
+@app.route('/transliterate', methods=['POST'])
+def transliterate():
+    data = request.json
+    text = data.get('text', '')
+    if not text:
+        return jsonify({'error': 'No text provided'}), 400
+
+    transliterated_text = transliterate_to_macedonian(text)
+    return jsonify({'original': text, 'transliterated': transliterated_text})
+
 
 @app.route('/about')
 def about():
