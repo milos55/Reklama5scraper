@@ -428,22 +428,6 @@ latin_to_macedonian = {
     'sh': 'ш', 'u': 'у', 'f': 'ф', 'h': 'х', 'y': 'у'
 }
 
-def transliterate_to_macedonian(text):
-    """Convert a string from Latin to Macedonian Cyrillic."""
-    sorted_keys = sorted(latin_to_macedonian.keys(), key=len, reverse=True)
-    for key in sorted_keys:
-        text = text.replace(key, latin_to_macedonian[key])
-    return text
-
-@app.route('/transliterate', methods=['POST'])
-def transliterate():
-    data = request.json
-    text = data.get('text', '')
-    if not text:
-        return jsonify({'error': 'No text provided'}), 400
-
-    transliterated_text = transliterate_to_macedonian(text)
-    return jsonify({'original': text, 'transliterated': transliterated_text})
 
 
 @app.route('/about')
