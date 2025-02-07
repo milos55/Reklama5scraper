@@ -1,18 +1,49 @@
 {% extends 'base.html' %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reklama5 Scraper</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-</head>
 
 {% block content %}
-<body>
     <div id="main-container" class="container" style="display: none;">
-        <div id="categories-subcategories" class="flex-container">
-            <!-- Categories Block -->
+        <div class="parent-container-search-bar">
+            <div class="search-bar">
+                <div>
+                    <button class="dropdown-cat-btn"><i class="fa-solid fa-bars"></i> Категории</button>
+                    <ul class="dropdown-cat-menu">
+                        {% for category, id in katdict.items() %}
+                            <li>
+                                <a href="#" class="dropdown-item" 
+                                   data-category-id="{{ id }}" 
+                                   data-category-name="{{ category }}">
+                                   {{ category }}
+                                </a>
+                                <!-- Subcategories Dropdown -->
+                                {% if id in katdictx and katdictx[id] is mapping %}
+                                    <ul class="dropdown-submenu">
+                                        {% for subcategory, url in katdictx[id].items() %}
+                                            <li><a href="#" class="dropdown-subitem" data-subcategory-url="{{ url }}">{{ subcategory }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <!--Dropdown categories select Make work-->
+                <input type="text" class="search-input" id="search-input" placeholder="Monitor, tdi , tsi">
+                <input type="number" class="page-input" id="page-input" min="1">
+                <!-- <input type="text" class="location-input" placeholder="Локација"> -->
+                <button class="search-btn" id="search-btn" onclick="handleSearch()"><i class="fa-solid fa-magnifying-glass"></i></button><!--Make work-->
+            </div>
+        </div>
+        <div class="checkbox-container">
+            <div class="checkbox-div"><input type='checkbox' id='checkbox-title' class="checkbox" value="1" checked>
+                <label for="checkbox-title"> Барај по наслов</label></div>
+            <div class="checkbox-div"><input type='checkbox' id='checkbox-desc' class="checkbox" value="1" checked>
+                <label for="checkbox-desc"> Барај по опис</label></div>
+            
+        </div>
+        <!--<div id="categories-subcategories" class="flex-container">
+            
             <div id="categories-container" class="block">
                 <h2>Категории</h2>
                 <div class="grid-container">
@@ -22,12 +53,12 @@
                 </div>
             </div>
     
-            <!-- Subcategories Block -->
+            
             <div id="subcategories-container" class="block">
                 <h2>Подкатегорија</h2>
                 <div class="grid-container"></div>
             </div>
-        </div>
+        </div> -->
     </div>
     
     <!-- Ads Block (Hidden Initially) -->
@@ -40,6 +71,7 @@
     </div>
 
     <script>
+        // Function to show the main content
         document.addEventListener("DOMContentLoaded", function () {
             const getStartedBtns = document.querySelectorAll(".action-btn"); // Select all buttons
             const mainContainer = document.getElementById("main-container");
@@ -75,7 +107,34 @@
             });
         });
 
+        // Function to show the dropdown menu dont work fixx!!!
+        document.addEventListener("DOMContentLoaded", function () {
+            const dropdownBtn = document.querySelector(".dropdown-cat-btn");
+            const dropdownMenu = document.querySelector(".dropdown-cat-menu");
 
+            // Toggle dropdown menu on button click
+            dropdownBtn.addEventListener("click", function () {
+                dropdownMenu.style.display = dropdownMenu.style.display === "block" ? "none" : "block";
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener("click", function (event) {
+                if (!dropdownBtn.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                    dropdownMenu.style.display = "none";
+                }
+            });
+
+            // Handle category and subcategory selection
+            dropdownMenu.addEventListener("click", function (event) {
+                if (event.target.classList.contains("dropdown-item")) {
+                    const categoryId = event.target.getAttribute("data-category-id");
+                    console.log("Selected Category ID:", categoryId);
+                } else if (event.target.classList.contains("dropdown-subitem")) {
+                    const subcategoryUrl = event.target.getAttribute("data-subcategory-url");
+                    console.log("Selected Subcategory URL:", subcategoryUrl);
+                }
+            });
+        });
         function selectCategory(categoryId) {
             fetch(`/select_category/${categoryId}`)
                 .then(response => response.json())
@@ -106,78 +165,135 @@
                 });
         }
     
-        function fetchAds(url) {
-            let maxPage;
-            while (true) {
-                let input = prompt("Внесете број на страни за пребарување", "1");
-                maxPage = parseInt(input);
-                if (!isNaN(maxPage) && maxPage > 0) {
-                    break;
+
+        document.querySelectorAll('.dropdown-subitem').forEach(item => {
+            item.addEventListener('click', function () {
+                document.querySelectorAll('.dropdown-subitem').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                console.log("Subcategory Selected:", this.textContent, "URL:", this.getAttribute('data-subcategory-url'));
+            });
+        });
+
+        // doesnt work fix
+        function handleSearch() {
+            const searchInput = document.getElementById('search-input').value;
+            const pageInput = document.getElementById('page-input').value;
+            const searchTitle = document.getElementById('checkbox-title').checked;
+            const searchDesc = document.getElementById('checkbox-desc').checked;
+
+            // Get the selected category or subcategory URL
+            const selectedCategory = document.querySelector('.dropdown-item.active');
+            const selectedSubcategory = document.querySelector('.dropdown-subitem.active');
+
+            let url;
+            if (selectedSubcategory) {
+                url = selectedSubcategory.getAttribute('data-subcategory-url');
+            } else if (selectedCategory) {
+                url = selectedCategory.getAttribute('data-category-url');
+                if (!url) {
+                    alert("Изберете категорија или подкатегорија прво.");
+                    return;
                 }
-                alert("Невалиден број на страни.");
+            } else {
+                alert("Изберете категорија или подкатегорија прво.");
+                return;
             }
 
-            fetch('/fetch_ads', {
+            // Call fetchAds with the collected data
+            fetchAds(url, pageInput, searchInput, searchTitle, searchDesc);
+        }
+
+    // Function to fetch ads
+    function fetchAds(url, maxPage, keywordInput, searchTitle, searchDesc) {
+        fetch('/fetch_ads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url, max_page: parseInt(maxPage) }),
+        })
+        .then(response => response.json())
+        .then(ads => {
+            let adsContainer = document.getElementById('ads-container');
+            let adsGrid = adsContainer.querySelector(".ads-grid");
+
+            // Hide categories/subcategories
+            document.getElementById('main-container').style.display = "none";
+            adsContainer.style.display = "block";
+
+            // Process keywords
+            let keywords = keywordInput ? keywordInput.split(',').map(k => k.trim()) : [];
+
+            // Filter ads based on keywords and checkbox states
+            fetch('/search_ads', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: url, max_page: parseInt(maxPage) }),
+                body: JSON.stringify({ ads: ads, keywords: keywords, search_title: searchTitle, search_desc: searchDesc }),
             })
             .then(response => response.json())
-            .then(ads => {
-                let adsContainer = document.getElementById('ads-container');
-                let adsGrid = adsContainer.querySelector(".ads-grid");
-
-                // Hide categories/subcategories
-                document.getElementById('main-container').style.display = "none";
-                adsContainer.style.display = "block";
-
-                // Ask user for keywords
-                let keywordInput = prompt("Внесете зборови (одделени со запирка) за филтирирање на реклами:", "");
-                let keywords = keywordInput ? keywordInput.split(',').map(k => k.trim()) : [];
-
-                fetch('/search_ads', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ads: ads, keywords: keywords }),
-                })
-                .then(response => response.json())
-                .then(filteredAds => {
-                    let adsHtml = "";
-                    filteredAds.forEach(ad => {
-                        adsHtml += `
-                            <a href="${ad.adlink}" target="_blank" style="text-decoration: none;">
-                                <div class="ad-block">
-                                    <p>${ad.adtitle}</p>
-                                    <p>${ad.addate} | ${ad.adprice}</p>
-                                    <div class="ad-description">${ad.addesc}</div>
+            .then(filteredAds => {
+                let adsHtml = "";
+                filteredAds.forEach(ad => {
+                    adsHtml += `
+                        <a href="${ad.adlink}" target="_blank" style="text-decoration: none;">
+                            <div class="ad-block">
+                                <div class="ad-title"><p>${ad.adtitle}</p></div>
+                                <div class="ad-info">
+                                    <p id="ad-date">${ad.addate}</p><p id="ad-price">${ad.adprice}</p>
                                 </div>
-                            </a>`;
-                    });
-
-                    // Insert ads inside `.ads-grid` only
-                    adsGrid.innerHTML = adsHtml;
+                                <div class="ad-description">${ad.addesc}</div>
+                            </div>
+                        </a>`;
                 });
+
+                // Insert ads inside `.ads-grid`
+                adsGrid.innerHTML = adsHtml;
             });
+        });
+    }
+
+    // Function to go back from ads
+    function goBack() {
+        let mainContainer = document.getElementById('main-container');
+        let adsContainer = document.getElementById('ads-container');
+
+        // Show categories & subcategories
+        mainContainer.style.display = "block";
+
+        // Hide ads container
+        adsContainer.style.display = "none";
+    }
+
+// Function to handle scroll in pages
+document.addEventListener("DOMContentLoaded", function () {
+    const numberInput = document.getElementById("page-input");
+
+    if (!numberInput.value) {
+        numberInput.setAttribute("placeholder", "Страни");
+    }
+
+    numberInput.addEventListener("focus", function () {
+        if (!this.value || this.value < 1) {
+            this.value = 1;
         }
+    });
 
-    
-        function goBack() {
-            let mainContainer = document.getElementById('main-container');
-            let adsContainer = document.getElementById('ads-container');
-            let categoriesSubcategories = document.getElementById('categories-subcategories');
+    numberInput.addEventListener("wheel", function (event) {
+        event.preventDefault();
 
-            // Show categories & subcategories
-            mainContainer.style.display = "block";
-            categoriesSubcategories.style.display = "flex"; // Ensure it restores the flex layout
+        const delta = -Math.sign(event.deltaY);
 
-            // Hide ads container
-            adsContainer.style.display = "none";
+        let currentValue = parseInt(numberInput.value, 10);
+        if (!isNaN(currentValue)) {
+            currentValue += delta;
+            if (currentValue < 1) {
+                currentValue = 1;
+            }
+            numberInput.value = currentValue;
         }
+    });
+});
 
-
-
+        
 
     </script>
-</body>
 {% endblock content %}
 </html>

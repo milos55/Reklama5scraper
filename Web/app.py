@@ -8,7 +8,7 @@ app = Flask(__name__, static_folder='static')
 
 # Mock data for katdict and katdictx
 katdict = {
-    'Сите Категории\n': 1,
+    'Сите Категории\n': 'https://www.reklama5.mk/Search?city=&cat=0&q=&page=1',
     'Моторни Возила\n': 2,
     'Недвижности\n': 3,
     'Дом и Градина\n': 4,
@@ -24,21 +24,20 @@ katdict = {
     'Книги и литература\n': 14,
     'Канцелариски и Школски прибор\n': 15,
     'Слободно време и хоби, Животни\n': 16,
-    'Спортска опрема и активности\n': 17,
-    'Антиквитети, Уметност, Колекц.\n': 18,
-    'Бизнис и дејности, Машини алати\n': 19,
-    'Храна и готвење\n': 20,
-    'Продавници, Трговија\n': 21,
-    'Услуги, Сервисери\n': 22,
-    'Вработување\n': 23,
-    'Настани, Ноќен живот, Изложби\n': 24,
-    'Одмор, Туризам, Билети, Патувања\n': 25,
-    'Лични контакти\n': 26,
-    'Останато\n': 27
+    'Спортска опрема и активности\n': 'https://www.reklama5.mk/Search?city=&cat=1063&page=1',
+    'Антиквитети, Уметност, Колекц.\n': 'https://www.reklama5.mk/Search?city=&cat=1193&page=1',
+    'Бизнис и дејности, Машини алати\n': 'https://www.reklama5.mk/Search?city=&cat=1207&page=1',
+    'Храна и готвење\n': 'https://www.reklama5.mk/Search?city=&cat=1235&page=1',
+    'Продавници, Трговија\n': 'https://www.reklama5.mk/Search?city=&cat=1254&page=1',
+    'Услуги, Сервисери\n': 'https://www.reklama5.mk/Search?city=&cat=1255&page=1',
+    'Вработување\n': 'https://www.reklama5.mk/Search?city=&cat=1256&page=1',
+    'Настани, Ноќен живот, Изложби\n': 'https://www.reklama5.mk/Search?city=&cat=1257&page=1',
+    'Одмор, Туризам, Билети, Патувања\n': 'https://www.reklama5.mk/Search?city=&cat=1258&page=1',
+    'Лични контакти\n': 'https://www.reklama5.mk/Search?city=&cat=1259&page=1',
+    'Останато\n': 'https://www.reklama5.mk/Search?city=&cat=1260&page=1'
 }
 
 katdictx = {
-    1: 'https://www.reklama5.mk/Search?city=&cat=0&q=&page=1',
 
     2: {
         'Сите Моторни Возила \n': 'https://www.reklama5.mk/Search?city=&cat=1&q=&page=1',
@@ -266,17 +265,7 @@ katdictx = {
         'Останато \n': 'https://www.reklama5.mk/Search?city=&cat=1040&page=1',
     },
 
-    17: 'https://www.reklama5.mk/Search?city=&cat=1063&page=1',
-    18: 'https://www.reklama5.mk/Search?city=&cat=1193&page=1',
-    19: 'https://www.reklama5.mk/Search?city=&cat=1207&page=1',
-    20: 'https://www.reklama5.mk/Search?city=&cat=1235&page=1',
-    21: 'https://www.reklama5.mk/Search?city=&cat=1254&page=1',
-    22: 'https://www.reklama5.mk/Search?city=&cat=1255&page=1',
-    23: 'https://www.reklama5.mk/Search?city=&cat=1256&page=1',
-    24: 'https://www.reklama5.mk/Search?city=&cat=1257&page=1',
-    25: 'https://www.reklama5.mk/Search?city=&cat=1258&page=1',
-    26: 'https://www.reklama5.mk/Search?city=&cat=1259&page=1',
-    27: 'https://www.reklama5.mk/Search?city=&cat=1260&page=1'
+    
 
 }
 
@@ -284,27 +273,38 @@ def is_gui_active():
     return False  # Since this is a Flask app, GUI is not active
 
 def select_category(category_id):
-    primary_category = list(katdict.keys())[category_id - 1]
-    primary_id = katdict[primary_category]
-    primary_value = katdictx.get(primary_id)
-    return primary_category, primary_value
+    try:
+        # Find category based on category_id (assuming category_id is a 1-based index)
+        primary_category = list(katdict.keys())[category_id - 1]  
+        primary_id = katdict[primary_category]
+        primary_value = katdictx.get(primary_id)
+        return primary_category, primary_value
+    except IndexError:
+        # Handle invalid category_id
+        return None, None
 
 def select_sec_category(primary_category, primary_value, subcategory_id=None):
     if isinstance(primary_value, str):
+        # If the primary_value is a string, it is the URL
         return primary_category, primary_value
     elif isinstance(primary_value, dict):
         if subcategory_id is None:
+            # If no subcategory_id is provided, return all subcategories
             return list(primary_value.items())
         else:
-            secondary_category = list(primary_value.keys())[subcategory_id - 1]
-            secondary_url = primary_value[secondary_category]
-            return secondary_category, secondary_url
+            # Otherwise, return the specific subcategory and its URL
+            try:
+                secondary_category = list(primary_value.keys())[subcategory_id - 1]
+                secondary_url = primary_value[secondary_category]
+                return secondary_category, secondary_url
+            except IndexError:
+                # Handle invalid subcategory_id
+                return None, None
     else:
-        return None
+        return None, None
+
 
 def page_read(secondary_url, max_page):
-    if max_page is None:
-        print("Избери валиден број на страни за прегледување")
     adid = []
     adlink = []
     for page in range(1, max_page + 1):
@@ -355,22 +355,39 @@ def search_ads_and_update_progress(ads, keywords, search_title=True, search_desc
 
 @app.route('/')
 def index():
-    return render_template('index.html', categories=katdict.items())
+    return render_template('index.html', categories=katdict.items(), katdict=katdict, katdictx=katdictx)
 
 @app.route('/select_category/<int:category_id>')
 def select_category_route(category_id):
+    # Get the primary category and its value
     primary_category, primary_value = select_category(category_id)
+    
     if isinstance(primary_value, dict):
+        # If primary_value is a dictionary, get the list of subcategories
         subcategories = select_sec_category(primary_category, primary_value)
-        return jsonify({"primary_category": primary_category, "subcategories": subcategories})
+        return jsonify({
+            "primary_category": primary_category,
+            "subcategories": subcategories
+        })
     else:
-        return jsonify({"primary_category": primary_category, "url": primary_value})
+        # If primary_value is a string (URL), return it directly
+        return jsonify({
+            "primary_category": primary_category,
+            "url": primary_value
+        })
 
 @app.route('/select_subcategory/<int:category_id>/<int:subcategory_id>')
 def select_subcategory_route(category_id, subcategory_id):
+    # Get the primary category and its value
     primary_category, primary_value = select_category(category_id)
+    
+    # Get the specific subcategory and its URL
     secondary_category, secondary_url = select_sec_category(primary_category, primary_value, subcategory_id)
-    return jsonify({"secondary_category": secondary_category, "url": secondary_url})
+    
+    return jsonify({
+        "secondary_category": secondary_category,
+        "url": secondary_url
+    })
 
 @app.route('/fetch_ads', methods=['POST'])
 def fetch_ads():
